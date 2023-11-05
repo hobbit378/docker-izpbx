@@ -522,9 +522,21 @@ Consult official repository page for installation and configuration of Asterisk 
 For Yealink / Fanvil phones you can use a single Phonebook Menu: **http://IZPBX_ADDRESS/pb/yealink/menu**
 
 # FAQ / Troubleshooting
-- FOP2 specific version upgrade/downgrade:
-  `curl -fSL --connect-timeout 30 http://download2.fop2.com/fop2-2.31.37-centos-x86_64.tgz | tar xz -C /usr/src`
-  `cp /usr/src/fop2/server/fop2_server /usr/local/fop2/fop2_server`
+- FOP2 specific version upgrade/downgrade (get latest release number from https://www.fop2.com/download.php):
+  automatic upgrade:
+  ```
+  FOP2_VER=2.31.37
+  curl -fSL --connect-timeout 30 http://download2.fop2.com/fop2-$FOP2_VER-centos-x86_64.tgz | tar xz -C /usr/src
+  cd /usr/src/fop2
+  make install
+  supervisorctl restart fop2
+  ```
+
+  for manual downgrade just copy the fop2_server binary:
+  ```
+  cp /usr/src/fop2/server/fop2_server /usr/local/fop2/fop2_server
+  supervisorctl restart fop2
+  ```
 
 - FOP2 useful commands:
     NB. define interface name to associate the license, for example: `eth0`
