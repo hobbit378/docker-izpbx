@@ -1,3 +1,5 @@
+# NOTE: don't edit this file, instead specify your changes creating docker-compose.override.yml
+
 version: '3'
 
 networks:
@@ -12,13 +14,19 @@ networks:
       #config:
       #- subnet: 10.1.1.0/24
 
+# secrets:
+#   IZPBX_MYSQL_ROOT_PASSWORD:
+#     environment: MYSQL_ROOT_PASSWORD
+#   IZPBX_MYSQL_PASSWORD:
+#     environment: MYSQL_PASSWORD
+
 services:
   # https://hub.docker.com/_/mariadb?tab=tags&page=1&ordering=last_updated
   db:
-    # previous long term release
+    # current LTS (Long Term Support) release
+    image: docker.io/mariadb:10.11.6
+    # previous LTS (Long Term Support) release
     #image: docker.io/mariadb:10.6.14
-    # current long term release
-    image: docker.io/mariadb:10.11.5
     container_name: izpbx-db
     ## WARNING: if you upgrade image tag enter the container and run mysql_upgrade:
     ## source .env ; docker exec -it izpbx-db mysql_upgrade -u root -p$MYSQL_ROOT_PASSWORD
@@ -32,8 +40,14 @@ services:
     - MYSQL_USER
     - MYSQL_PASSWORD
     - MYSQL_ROOT_PASSWORD
+    ## NOTE: using secrets files need further testing
+    #- MYSQL_PASSWORD_FILE=/run/secrets/IZPBX_MYSQL_PASSWORD
+    #- MYSQL_ROOT_PASSWORD_FILE=/run/secrets/IZPBX_MYSQL_ROOT_PASSWORD
     #- MARIADB_RANDOM_ROOT_PASSWORD=${MYSQL_RANDOM_ROOT_PASSWORD}
     #- MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=${MYSQL_ALLOW_EMPTY_ROOT_PASSWORD}
+    #secrets:
+    #- IZPBX_MYSQL_PASSWORD
+    #- IZPBX_MYSQL_ROOT_PASSWORD
     volumes:
     #- /etc/localtime:/etc/localtime:ro
     - ./data/db:/var/lib/mysql
@@ -48,7 +62,7 @@ services:
 
   # https://hub.docker.com/r/izdock/izpbx-asterisk/tags?page=1&ordering=last_updated
   izpbx:
-    image: docker.io/izdock/izpbx-asterisk:20.16.10
+    image: docker.io/izdock/izpbx-asterisk:20.16.11
     container_name: izpbx
     #entrypoint: /bin/bash -c "/bin/bash -c \"sleep 3600\""
     #hostname: ${APP_FQDN}
@@ -57,6 +71,9 @@ services:
     - db
     env_file:
     - .env
+    #secrets:
+    #- IZPBX_MYSQL_PASSWORD
+    #- IZPBX_MYSQL_ROOT_PASSWORD
     volumes:
     #- /etc/localtime:/etc/localtime:ro
     - ./data/izpbx:/data
