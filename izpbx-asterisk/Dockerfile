@@ -11,7 +11,7 @@ MAINTAINER Ugo Viti <ugo.viti@initzero.it>
 
 ## full app version
 #ARG APP_VER=${APP_VER_MAJOR}.${APP_VER_MINOR}.${APP_VER_PATCH}
-ARG APP_VER=20.16.x_mwe
+ARG APP_VER=20.16.12_mwe2.0
 ENV APP_VER=${APP_VER}
 ARG RHEL_VER=8
 # PHP versions: FreePBX15 <= 7.2, FreePBX16 >= 7.4
@@ -19,7 +19,7 @@ ARG PHP_VER=7.4
 
 ### components app versions
 ## https://downloads.asterisk.org/pub/telephony/asterisk/releases
-ARG ASTERISK_VER=20.5.2
+ARG ASTERISK_VER=20.7.0
 
 ## https://github.com/FreePBX/core/tags (only major version)
 ARG FREEPBX_VER=16
