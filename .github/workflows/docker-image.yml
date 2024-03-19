@@ -10,6 +10,22 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Get Date
         id: date
         run: echo "::set-output name=date::$(date +%s)"
@@ -23,27 +39,22 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
+            hobbit00378/izpbx-asterisk
             ghcr.io/hobbit378/izpbx-asterisk
           # generate Docker tags based on the following events/attributes
           tags: |
-            type=ref,event=branch,suffix=-{{sha}}
-            type=semver,pattern={{raw}},suffix=-{{sha}}
+            # set latest tag for default branch
+            type=raw,value=latest,enable={{is_default_branch}}
+            # set latest suffix in connection with branch
+            type=ref,event=branch,suffix=-latest
+            # set version from git tag
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
+            # set latest suffix in connection with version
+            type=semver,pattern={{major}}.{{minor}},suffix=-latest
           labels: |
-            org.opencontainers.image.tile=izpbx-mwe
+            org.opencontainers.image.title=izpbx-mwe
             org.opencontainers.image.source=https://github.com/hobbit378/docker-izpbx
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and Push Image
         uses: docker/build-push-action@v4
@@ -52,6 +63,6 @@ jobs:
           build-args: APP_BUILD_DATE=${{ steps.date.outputs.date }} APP_VER=20.16
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          push: true
