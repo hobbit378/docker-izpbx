@@ -25,7 +25,7 @@ ARG ASTERISK_VER=20.7.0
 ARG FREEPBX_VER=16
 
 ## https://www.fop2.com/download.php
-ARG FOP2_VER=2.31.38
+ARG FOP2_VER=2.31.40
 
 ## http://sources.buildroot.net/spandsp
 ARG SPANDSP_VER=3.0.0-6ec23e5a7e
@@ -55,7 +55,7 @@ ENV ZABBIX_VER=6.4
 ARG ZABBIX_TEMPLATE_VER=main
 
 ## https://github.com/irontec/sngrep/releases
-ARG SNGREP_VER=1.8.0
+ARG SNGREP_VER=1.8.1
 ARG SNGREP_XTRA_BUILDCONFIG=""
 
 ### define variables for later container usage
