@@ -55,7 +55,7 @@ ENV ZABBIX_VER=6.4
 ARG ZABBIX_TEMPLATE_VER=main
 
 ## https://github.com/irontec/sngrep/releases
-ARG SNGREP_VER=1.8.0
+ARG SNGREP_VER=1.8.1
 ARG SNGREP_XTRA_BUILDCONFIG=""
 
 ### define variables for later container usage
