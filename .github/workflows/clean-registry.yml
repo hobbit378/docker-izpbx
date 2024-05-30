@@ -1,17 +1,19 @@
 name: Clear Container Registry
 
 on:
-  # every Sunday and Wednesday at 01:30am
-  schedule:
-    - cron: '30 1 * * 0,3'
-  # or manually
+  
   workflow_dispatch:
+  
+  schedule:
+    - cron: '30 1 * * 0'
 
 jobs:
   clear-all:
+    
     runs-on: ubuntu-latest
     permissions:
       packages: write
+    
     steps:
       - name: 'Clear untagged images '
         uses: dataaxiom/ghcr-cleanup-action@main

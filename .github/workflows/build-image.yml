@@ -1,14 +1,21 @@
-name: Docker Image CI
+name: Build Image
 
 on:
+
   workflow_dispatch:
+
   push:
+    paths: 
+      - 'CHANGELOG.md' 
+      - 'CHANGELOG-MWE_MODS.md' 
+
     tags:
       - 'v*'  
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2

@@ -1,0 +1,32 @@
+name: Merge upstream changes from IZPBX
+
+on:
+
+    workflow_dispatch:
+    
+    schedule:
+        - cron: "0 1 * * 1"
+
+jobs:
+
+    merge-izpbx:
+        runs-on: ubuntu-latest
+        permissions:
+            repository-projects: write
+        
+        steps:
+        - name: Sync and merge IZPBX upstream repository with our main branch
+          uses: dabreadman/sync-upstream-repo@v1.3.0
+          with:
+                # URL of gitHub public upstream repo
+                upstream_repo: "https://github.com/ugoviti/izpbx.git"
+                # Branch to merge from upstream (defaults to downstream branch)
+                upstream_branch: main
+                # Branch to merge into downstream
+                downstream_branch: main
+                # GitHub Bot token
+                token: ${{ secrets.GITHUB_TOKEN }}
+                # logs
+                spawn_logs: true
+
+
