@@ -2,7 +2,7 @@ ARG RHEL_VER=8
 ARG IMAGE_FROM=rockylinux/rockylinux:${RHEL_VER}
 FROM ${IMAGE_FROM}
 
-MAINTAINER Ugo Viti <ugo.viti@initzero.it>
+MAINTAINER Ugo Viti <u.viti@wearequantico.it>
 
 ### default app args used during build step
 #ARG APP_VER_MAJOR=
@@ -16,6 +16,12 @@ ENV APP_VER=${APP_VER}
 ARG RHEL_VER=8
 # PHP versions: FreePBX15 <= 7.2, FreePBX16 >= 7.4
 ARG PHP_VER=7.4
+
+# architecture dependent vars used in build stage
+ARG TARGETPLATFORM
+ARG TARGETARCH
+ARG TARGETVARIANT
+ARG TARGETOS
 
 ### components app versions
 ## https://downloads.asterisk.org/pub/telephony/asterisk/releases
@@ -49,7 +55,8 @@ ARG ASTERISK_CHAN_DONGLE_VER=master
 ARG IZSYNTH_VER=5.0
 
 ## https://www.zabbix.com/download_agents
-ENV ZABBIX_VER=6.4
+ENV ZABBIX_VER=7.0
+ENV ZABBIX_REL=${ZABBIX_VER}-1
 
 ## https://github.com/ugoviti/zabbix-templates
 ARG ZABBIX_TEMPLATE_VER=main
@@ -85,7 +92,7 @@ ARG APP_INSTALL_EXTRA=""
 ### STEP 1: INSTALL BASE PACKAGES
 RUN set -xe && \
   ## import system information vars
-  . /etc/os-release && \
+  . /etc/os-release && export OSARCH=$(uname -m) && \
   \
   ## install packages
   APP_INSTALL_DEPS='\
@@ -204,8 +211,8 @@ RUN set -xe && \
     msmtp \
     mtr \
     vim-enhanced \
+    lame-libs \
   ' && \
-  #  lame \
   # NOTE: postfix > 3.4.x is required for docker logging to stdout
   if [[ ${RHEL_VER} -le 8 ]]; then \
   # <= el8 (deprecated in el9)
@@ -225,11 +232,10 @@ RUN set -xe && \
   export DNF_OPTS+=" -y --nodocs" && \
   ## enable epel repository
   dnf install ${DNF_OPTS} epel-release && \
-  \
   ## repo for phpMyAdmin
   rpm -Uvh https://rpms.remirepo.net/enterprise/remi-release-${RHEL_VER}.rpm && \
   ## repo for zabbix agent
-  rpm -Uvh https://repo.zabbix.com/zabbix/${ZABBIX_VER}/rhel/${RHEL_VER}/x86_64/zabbix-release-${ZABBIX_VER}-1.el${RHEL_VER}.noarch.rpm && \
+  rpm -Uvh https://repo.zabbix.com/zabbix/${ZABBIX_VER}/rocky/${RHEL_VER}/x86_64/zabbix-release-${ZABBIX_REL}.el${RHEL_VER}.noarch.rpm && \
   ## repo for ffmpeg command
   rpm -Uhv https://download1.rpmfusion.org/free/el/rpmfusion-free-release-${RHEL_VER}.noarch.rpm && \
   rpm -Uhv https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-${RHEL_VER}.noarch.rpm && \
@@ -243,16 +249,6 @@ RUN set -xe && \
   if [[ ${RHEL_VER} -ge 9 ]]; then export DNF_OPTS+=" --enablerepo=crb" ;fi && \
   #if [[ ${RHEL_VER} -le 8 ]]; then export DNF_OPTS+=" --enablerepo=okay" ;fi && \
   \
-  # install other repositories
-  if [[ ${RHEL_VER} -le 8 ]]; then \
-    # <= el8
-    ## repo for lame command
-    #rpm -Uhv http://repo.okay.com.mx/centos/"${RHEL_VER}"/x86_64/release/okay-release-1-9.el"${RHEL_VER}".noarch.rpm && \
-    rpm -Uhv http://repos.dslab.tuwien.ac.at/public/el${RHEL_VER}/x86_64/okay/lame-3.100-6.el${RHEL_VER}.x86_64.rpm http://repos.dslab.tuwien.ac.at/public/el${RHEL_VER}/x86_64/okay/lame-libs-3.100-6.el${RHEL_VER}.x86_64.rpm \
-    ## fix wrong option
-    #sed '/^failovermethod/d' -i /etc/yum.repos.d/okay.repo \
-  ;fi && \
-  \
   ## enable specific module php needed for FreePBX
   : "---------- Enable PHP ${PHP_VER} ----------" && \
   dnf module reset php -y && \
@@ -263,6 +259,8 @@ RUN set -xe && \
   ## install mandatory packages
   dnf install ${DNF_OPTS} ${APP_INSTALL_DEPS} ${APP_INSTALL_DEPS_EXTRA} ${APP_INSTALL_EXTRA} \
   && \
+  ## install extra packages
+  rpm -Uhv https://dl.rockylinux.org/pub/rocky/${RHEL_VER}/devel/${OSARCH}/os/Packages/l/lame-3.100-6.el${RHEL_VER}.${OSARCH}.rpm && \
   if [[ "$RHEL_MINIMAL" = "false" ]]; then \
     dnf mark install ${APP_INSTALL_DEPS} ${APP_INSTALL_DEPS_EXTRA} \
   ;fi && \
@@ -286,7 +284,7 @@ RUN set -xe && \
 ### STEP 3: BUILD STAGE
 ## build asterisk
 RUN set -xe && \
-  . /etc/os-release && \
+  . /etc/os-release && export OSARCH=$(uname -m) && \
   \
   ## manage dnf rhel minimal image variant
   if command -v microdnf 1>/dev/null; then export RHEL_MINIMAL="true" ;else export RHEL_MINIMAL="false" ;fi && \
@@ -631,7 +629,11 @@ RUN set -xe && \
   curl -fSL --connect-timeout 30 https://github.com/arkadijs/asterisk-g72x/archive/refs/heads/${ASTERISK_G72X_VER}.tar.gz | tar xz --strip 1 -C asterisk-g72x && \
   cd asterisk-g72x && \
   ./autogen.sh && \
-  ./configure --prefix=/usr --with-bcg729 --enable-penryn && \
+  if [[ "${TARGETARCH}" = "x86_64" ]]; then \
+    ./configure --prefix=/usr --with-bcg729 --enable-penryn; \
+  else \
+    ./configure --prefix=/usr --with-bcg729 \
+  ;fi && \
   make && \
   make install && \
   ldconfig \
@@ -762,6 +764,7 @@ RUN set -xe && \
   
 ## install other components
 RUN set -xe && \
+  . /etc/os-release && export OSARCH=$(uname -m) && \
   : "---------- START install izsynth by InitZero ----------" && \
   cd /usr/src && \
   mkdir -p izsynth && \
@@ -776,7 +779,7 @@ RUN set -xe && \
   : "---------- END install ----------" && \
   \
   : "---------- START install PHP ionCube Loader ----------" && \
-  curl -fSL --connect-timeout 30 https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_x86-64.tar.gz | tar xz --strip 1 -C /usr/lib64/php/modules/ ioncube/ioncube_loader_lin_"${PHP_VER}".so && \
+  curl -fSL --connect-timeout 30 https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_${OSARCH//_/-}.tar.gz | tar xz --strip 1 -C /usr/lib64/php/modules/ ioncube/ioncube_loader_lin_"${PHP_VER}".so && \
   echo "zend_extension=ioncube_loader_lin_${PHP_VER}.so" >> /etc/php.ini && \
   : "---------- END install ----------"
 

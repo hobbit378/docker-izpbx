@@ -1,4 +1,5 @@
 kind: pipeline
+type: docker
 name: izpbx-release
 
 environment:
@@ -10,10 +11,6 @@ environment:
 trigger:
   event:
   - tag
-
-platform:
-  os: linux
-  arch: amd64
 
 concurrency:
   limit: 1
@@ -44,7 +41,8 @@ steps:
   - set
 
 - name: build-docker
-  image: plugins/docker
+  image: owncloudci/drone-docker-buildx
+  privileged: true
   settings:
     repo: izdock/izpbx-asterisk
     dockerfile: izpbx-asterisk/Dockerfile
@@ -66,6 +64,9 @@ steps:
       - ${DRONE_TAG%%.*}
       - ${DRONE_TAG}-${DRONE_BUILD_NUMBER}
       #- ${DRONE_COMMIT_SHA:0:7}
+    platforms:
+      - linux/amd64
+#      - linux/arm64
 
 - name: rebuild-cache
   image: drillster/drone-volume-cache
@@ -91,13 +92,14 @@ steps:
 
 ---
 kind: pipeline
-name: izpbx-dev-20.16
+type: docker
+name: izpbx-dev-amd64
 
 environment:
   APP_VER: dev-20.16
   RHEL_VER: 8
   PHP_VER: 7.4
-  ASTERISK_VER: 20.2.0
+  ASTERISK_VER: 20.8.1
   FREEPBX_VER: 16
   APP_DEBUG: 1
   APP_VER_BUILD: "${DRONE_BUILD_NUMBER}"
