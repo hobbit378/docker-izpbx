@@ -16,16 +16,10 @@ jobs:
     
     steps:
       - name: 'Clear untagged images '
-        uses: dataaxiom/ghcr-cleanup-action@main
+        uses: actions/delete-package-versions@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          package: 'izpbx-asterisk'
-          dry-run: false
-      - name: 'Clear tagged images without version 20.16* tag'
-        uses: dataaxiom/ghcr-cleanup-action@main
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          package: 'izpbx-asterisk'
-          exclude-tags: '20.16*'
-          keep-n-tagged: 5
-          dry-run: false
+          package-name: 'izpbx-asterisk'
+          package-type: 'container'
+          delete-only-untagged-versions: 'true'
+
