@@ -1,5 +1,6 @@
-# EXPERIMENTAL BRANCH (switch to FreePBX 17) ! DO NOT CLONE !
-(work in progress)
+# WARNING: EXPERIMENTAL BRANCH - DO NOT CLONE !
+(work in progress / switch to FreePBX 17)
+
 
 # izpbx-asterisk
 

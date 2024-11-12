@@ -1,3 +1,6 @@
+# WARNING: EXPERIMENTAL BRANCH - DO NOT CLONE !
+(work in progress / switch to FreePBX 17)
+
 # Name
 [<img src="https://www.initzero.it/images/initzero-logo-izpbx-48x48.png">](https://www.initzero.it) izPBX Cloud Native VoIP Telephony System
 
