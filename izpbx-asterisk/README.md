@@ -1,3 +1,6 @@
+# EXPERIMENTAL BRANCH (switch to FreePBX 17) ! DO NOT CLONE !
+(work in progress)
+
 # izpbx-asterisk
 
 izPBX is a Turnkey Cloud Native VoIP Telephony System powered by Asterisk Engine and FreePBX Management GUI

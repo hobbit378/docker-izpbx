@@ -11,7 +11,7 @@ MAINTAINER Ugo Viti <u.viti@wearequantico.it>
 
 ## full app version
 #ARG APP_VER=${APP_VER_MAJOR}.${APP_VER_MINOR}.${APP_VER_PATCH}
-ARG APP_VER=21.17.0alpha1
+ARG APP_VER=22.17.0alpha1
 ENV APP_VER=${APP_VER}
 ARG RHEL_VER=8
 # PHP versions: FreePBX15 <= 7.2, FreePBX16 >= 7.4
@@ -25,11 +25,11 @@ ARG TARGETOS
 
 ### components app versions
 ## https://downloads.asterisk.org/pub/telephony/asterisk/releases
-ARG ASTERISK_VER=21.5.0
+ARG ASTERISK_VER=22.0.0
 
 ## https://github.com/FreePBX/core/tags
 ## (only major version)
-ARG FREEPBX_VER=16
+ARG FREEPBX_VER=17
 
 ## https://www.fop2.com/download.php
 ARG FOP2_VER=2.31.43
