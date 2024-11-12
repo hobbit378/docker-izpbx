@@ -11,11 +11,11 @@ MAINTAINER Ugo Viti <u.viti@wearequantico.it>
 
 ## full app version
 #ARG APP_VER=${APP_VER_MAJOR}.${APP_VER_MINOR}.${APP_VER_PATCH}
-ARG APP_VER=20.16.12_mwe2.1
+ARG APP_VER=21.17.0alpha1
 ENV APP_VER=${APP_VER}
 ARG RHEL_VER=8
 # PHP versions: FreePBX15 <= 7.2, FreePBX16 >= 7.4
-ARG PHP_VER=7.4
+ARG PHP_VER=8.2
 
 # architecture dependent vars used in build stage
 ARG TARGETPLATFORM
@@ -25,7 +25,7 @@ ARG TARGETOS
 
 ### components app versions
 ## https://downloads.asterisk.org/pub/telephony/asterisk/releases
-ARG ASTERISK_VER=20.9.2
+ARG ASTERISK_VER=21.5.0
 
 ## https://github.com/FreePBX/core/tags
 ## (only major version)
@@ -532,13 +532,13 @@ RUN set -xe && \
     --enable BETTER_BACKTRACES \
     --enable DONT_OPTIMIZE \
     --enable app_confbridge \
-    --enable app_macro \
+    #--enable app_macro \
     --enable app_page \
     --enable app_statsd \
     --enable app_saycounted \
     --enable binaural_rendering_in_bridge_softmix \
     --enable chan_motif \
-    --enable chan_sip \
+    #--enable chan_sip \
     --enable chan_pjsip \
     --enable codec_silk \
     --enable codec_opus \
@@ -551,7 +551,7 @@ RUN set -xe && \
     --enable res_endpoint_stats \
     --enable res_fax \
     --enable res_fax_spandsp \
-    --enable res_pktccops \
+    #--enable res_pktccops \
     --enable res_snmp \
     --enable res_srtp \
     --enable res_xmpp \
@@ -576,10 +576,10 @@ RUN set -xe && \
     --disable cel_tds \
     --disable cdr_radius \
     --disable cel_radius \
-    --disable chan_alsa \
+    #--disable chan_alsa \
     --disable chan_console \
-    --disable chan_mgcp \
-    --disable chan_skinny \
+    #--disable chan_mgcp \
+    #--disable chan_skinny \
     --disable chan_ooh323 \
     --disable chan_mobile \
     --disable chan_unistim \
@@ -592,8 +592,8 @@ RUN set -xe && \
     --disable res_config_mysql \
     --disable res_config_ldap \
     --disable res_adsi \
-    --disable res_monitor \
-    --disable res_pktccops \
+    #--disable res_monitor \
+    #--disable res_pktccops \
     --disable res_geolocation \
     ;fi && \
 # not supported anymore in asterisk 20
