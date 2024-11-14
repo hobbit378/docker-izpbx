@@ -5,10 +5,6 @@ on:
   workflow_dispatch:
 
   push:
-    paths: 
-      - 'CHANGELOG.md' 
-      - 'CHANGELOG-MWE_MODS.md' 
-
     tags:
       - 'v*'  
 
@@ -20,12 +16,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ vars.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -33,12 +23,30 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get Date
-        id: date
-        run: echo "::set-output name=date::$(date +%s)"
-      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          
       - name: Checkout Code
         uses: actions/checkout@v3
+
+      - name: Load .build_env
+        uses: aarcangeli/load-dotenv@v1
+        with:
+          filenames: |
+            .build_env
+          quiet: 'false'
+          if-file-not-found: 'warn'
+          expand: 'false'
+          
+      - name: Set Additional Environment Variables and Output
+        id: vars
+        run: |
+          # set APP_BUILD_DATE
+          echo "APP_BUILD_DATE=$(date +%F-%s)" >> "$GITHUB_ENV"
+        if: true
       
       - name: Create Image Tags and Labels
         id: meta
@@ -46,30 +54,42 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            hobbit00378/izpbx-asterisk
-            ghcr.io/hobbit378/izpbx-asterisk
-          # generate Docker tags based on the following events/attributes
+            name=hobbit00378/izpbx-asterisk,enable=false
+            name=ghcr.io/hobbit378/izpbx-asterisk,enable=true
+          flavor: |
+            latest=auto
+            prefix=
+            suffix=
           tags: |
-            # set latest tag for default branch
-            type=raw,value=latest,enable={{is_default_branch}}
-            # set latest suffix in connection with branch
-            type=ref,event=branch,suffix=-latest
-            # set version from git tag
-            type=semver,pattern={{version}}
-            # set latest suffix in connection with version
-            type=semver,pattern={{major}}.{{minor}},suffix=-latest
+            # set tagged version
+            type=semver,pattern={{raw}},event=tag
+            type=semver,pattern={{version}},event=tag
+            type=semver,pattern={{major}}.{{minor}},event=tag
+            type=raw,value=dev-${{ env.APP_VER }},event=workflow_dispatch
           labels: |
-            org.opencontainers.image.title=izpbx-mwe
             org.opencontainers.image.source=https://github.com/hobbit378/docker-izpbx
-
+            org.opencontainers.image.version="${{env.APP_VER}} (Build: ${{env.APP_VER_BUILD}})" 
+      
+      - name: Log Values
+        run: |
+          echo "App Version: $APP_VER"
+          echo "Build Number: $APP_VER_BUILD"
+          echo "Build Date: $APP_BUILD_DATE"
+          echo "FreePBX Version: ${FREEPBX_VER:-n/a}"
+          echo "Asterisk Version: ${ASTERISK_VER:-n/a}"
+          echo "END OUTPUT"
 
       - name: Build and Push Image
         uses: docker/build-push-action@v4
         with:
           context: ./izpbx-asterisk/
-          build-args: APP_BUILD_DATE=${{ steps.date.outputs.date }} APP_VER=20.16
+          build-args: |
+            APP_VER
+            APP_VER_BUILD
+            APP_BUILD_DATE=${{ steps.vars.outputs.APP_BUILD_DATE }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+        if: false
