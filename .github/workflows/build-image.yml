@@ -36,10 +36,11 @@ jobs:
         uses: aarcangeli/load-dotenv@v1
         with:
           filenames: |
-            .build_env
+            ${{ env.BUILD_ENV_FILE }}
           quiet: 'false'
-          if-file-not-found: 'warn'
+          if-file-not-found: 'error'
           expand: 'false'
+        if: env.BUILD_ENV_FILE != ''
           
       - name: Set Additional Environment Variables and Output
         id: vars
@@ -54,7 +55,7 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            name=hobbit00378/izpbx-asterisk,enable=false
+            name=hobbit00378/izpbx-asterisk,enable=true
             name=ghcr.io/hobbit378/izpbx-asterisk,enable=true
           flavor: |
             latest=auto
@@ -72,11 +73,14 @@ jobs:
       
       - name: Log Values
         run: |
-          echo "App Version: $APP_VER"
-          echo "Build Number: $APP_VER_BUILD"
-          echo "Build Date: $APP_BUILD_DATE"
-          echo "FreePBX Version: ${FREEPBX_VER:-n/a}"
-          echo "Asterisk Version: ${ASTERISK_VER:-n/a}"
+          echo "START Build Arguments"
+          echo "${BUILD_ARGS:-na}"
+          echo "END Build Arguments"
+          # echo "App Version: $APP_VER"
+          # echo "Build Number: $APP_VER_BUILD"
+          # echo "Build Date: $APP_BUILD_DATE"
+          # echo "FreePBX Version: ${FREEPBX_VER:-n/a}"
+          # echo "Asterisk Version: ${ASTERISK_VER:-n/a}"
           echo "END OUTPUT"
 
       - name: Build and Push Image
@@ -84,12 +88,11 @@ jobs:
         with:
           context: ./izpbx-asterisk/
           build-args: |
-            APP_VER
-            APP_VER_BUILD
-            APP_BUILD_DATE=${{ steps.vars.outputs.APP_BUILD_DATE }}
+            APP_BUILD_DATE=${{ env.APP_BUILD_DATE }}
+            ${{ env.BUILD_ARGS }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
-        if: false
+        if: env.APP_VER != ''
