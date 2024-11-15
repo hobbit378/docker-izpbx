@@ -11,7 +11,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+    env:
+      APP_VER: ${{vars.APP_VER}}
+      APP_VER_BUILD: ${{vars.APP_VER_BUILD}}
+      APP_BUILD_COMMIT: ${{github.sha}}
+      APP_BUILD_DATE: '1970-1-1'
+      BUILD_ARGS: ''
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -23,33 +28,33 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Login to Docker Hub
+      - name: Login to Docker Container Registry
         uses: docker/login-action@v3
         with:
-          username: ${{ vars.DOCKERHUB_USERNAME }}
+          registry: docker.io
+          username: ${{ vars.REPO_DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           
-      - name: Checkout Code
+      - name: Checkout Code from GitHub Repository
         uses: actions/checkout@v3
 
-      - name: Load .build_env
+      - name: Load ENVARS from File
         uses: aarcangeli/load-dotenv@v1
         with:
           filenames: |
-            ${{ env.BUILD_ENV_FILE }}
+            ${{ vars.APP_ENVARS_FILE }}
           quiet: 'false'
           if-file-not-found: 'error'
           expand: 'false'
-        if: env.BUILD_ENV_FILE != ''
+        if: vars.APP_ENVARS_FILE != ''
           
-      - name: Set Additional Environment Variables and Output
+      - name: Set Additional Variables 
         id: vars
         run: |
           # set APP_BUILD_DATE
           echo "APP_BUILD_DATE=$(date +%F-%s)" >> "$GITHUB_ENV"
-        if: true
       
-      - name: Create Image Tags and Labels
+      - name: Create Metadata - Image Tags and Labels
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -63,36 +68,27 @@ jobs:
             suffix=
           tags: |
             # set tagged version
-            type=semver,pattern={{raw}},event=tag
             type=semver,pattern={{version}},event=tag
             type=semver,pattern={{major}}.{{minor}},event=tag
-            type=raw,value=dev-${{ env.APP_VER }},event=workflow_dispatch
+            type=semver,pattern={{major}}.{{minor}}-{{sha}},event=tag
+            type=raw,value=${{ env.APP_VER }}-wd-{{sha}},event=workflow_dispatch
           labels: |
             org.opencontainers.image.source=https://github.com/hobbit378/docker-izpbx
             org.opencontainers.image.version="${{env.APP_VER}} (Build: ${{env.APP_VER_BUILD}})" 
-      
-      - name: Log Values
-        run: |
-          echo "START Build Arguments"
-          echo "${BUILD_ARGS:-na}"
-          echo "END Build Arguments"
-          # echo "App Version: $APP_VER"
-          # echo "Build Number: $APP_VER_BUILD"
-          # echo "Build Date: $APP_BUILD_DATE"
-          # echo "FreePBX Version: ${FREEPBX_VER:-n/a}"
-          # echo "Asterisk Version: ${ASTERISK_VER:-n/a}"
-          echo "END OUTPUT"
 
       - name: Build and Push Image
         uses: docker/build-push-action@v4
         with:
           context: ./izpbx-asterisk/
           build-args: |
-            APP_BUILD_DATE=${{ env.APP_BUILD_DATE }}
+            APP_VER
+            APP_VER_BUILD
+            APP_BUILD_COMMIT
+            APP_BUILD_DATE
             ${{ env.BUILD_ARGS }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          push: true
-        if: env.APP_VER != ''
+          push: ${{ vars.PUSH_ENABLED }}
+        if: vars.BUILD_ENABLED

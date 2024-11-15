@@ -1,3 +1,4 @@
-BUILD_ARGS="
-APP_VER=20.16.16-mwe.1
-APP_VER_BUILD=1"
+# Put your ENVARS here
+# e.g. BUILD_ARGS=""
+# e.g. APP_VER=20.16.16-mwe-16
+#
