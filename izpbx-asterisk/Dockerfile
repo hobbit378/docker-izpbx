@@ -2,7 +2,7 @@ ARG RHEL_VER=8
 ARG IMAGE_FROM=rockylinux/rockylinux:${RHEL_VER}
 FROM ${IMAGE_FROM}
 
-MAINTAINER Ugo Viti <u.viti@wearequantico.it>
+LABEL maintainer="Ugo Viti <u.viti@wearequantico.it>"
 
 ### default app args used during build step
 #ARG APP_VER_MAJOR=
@@ -25,14 +25,14 @@ ARG TARGETOS
 
 ### components app versions
 ## https://downloads.asterisk.org/pub/telephony/asterisk/releases
-ARG ASTERISK_VER=20.9.2
+ARG ASTERISK_VER=20.11.0
 
 ## https://github.com/FreePBX/core/tags
 ## (only major version)
 ARG FREEPBX_VER=16
 
 ## https://www.fop2.com/download.php
-ARG FOP2_VER=2.31.43
+ARG FOP2_VER=2.31.45
 
 ## http://sources.buildroot.net/spandsp
 ARG SPANDSP_VER=3.0.0-6ec23e5a7e
@@ -231,6 +231,7 @@ RUN set -xe && \
   \
   ## dnf extra options
   export DNF_OPTS+=" -y --nodocs" && \
+  echo "ip_resolve=4" >> /etc/dnf/dnf.conf && \
   ## enable epel repository
   dnf install ${DNF_OPTS} epel-release && \
   ## repo for phpMyAdmin
@@ -702,7 +703,7 @@ RUN set -xe && \
   MODULE="framework" && \
   MODULE_VER=$(php -r "echo json_encode(simplexml_load_file('modules-${FREEPBX_VER}.0.xml'));" | jq -r ".module[] | select(.rawname == \"${MODULE}\") | {version}".version) && \
   echo "---------- Predownloading freepbx framework latest release: ${MODULE_VER} ----------" && \
-  curl -sfSL --connect-timeout 30 http://mirror.freepbx.org/modules/packages/$MODULE/$MODULE-${MODULE_VER}.tgz | tar xz --strip 1 -C ./ && \
+  curl -fSL --connect-timeout 30 http://mirror.freepbx.org/modules/packages/$MODULE/$MODULE-${MODULE_VER}.tgz | tar xz --strip 1 -C ./ && \
   \
   # make the modules cache
   mkdir -p amp_conf/htdocs/admin/modules/_cache && \
@@ -759,8 +760,8 @@ RUN set -xe && \
   MODULE_VER=$(php -r "echo json_encode(simplexml_load_file('modules-${FREEPBX_VER}.0.xml'));" | jq -r ".module[] | select(.rawname == \"${MODULE}\") | {version}".version) && \
   mkdir -p amp_conf/htdocs/admin/modules/$MODULE && \
   echo "---------- Predownloading module for offline install: $MODULE ${MODULE_VER} ----------" && \
-  curl -sfSL --connect-timeout 30 http://mirror.freepbx.org/modules/packages/$MODULE/$MODULE-${MODULE_VER}.tgz | tar xz --strip 1 -C amp_conf/htdocs/admin/modules/$MODULE/ && \
-  curl -sfSL --connect-timeout 30 http://mirror.freepbx.org/modules/packages/$MODULE/$MODULE-${MODULE_VER}.tgz.gpg -o amp_conf/htdocs/admin/modules/_cache/$MODULE-${MODULE_VER}.tgz.gpg \
+  curl -fSL --connect-timeout 30 http://mirror.freepbx.org/modules/packages/$MODULE/$MODULE-${MODULE_VER}.tgz | tar xz --strip 1 -C amp_conf/htdocs/admin/modules/$MODULE/ && \
+  curl -fSL --connect-timeout 30 http://mirror.freepbx.org/modules/packages/$MODULE/$MODULE-${MODULE_VER}.tgz.gpg -o amp_conf/htdocs/admin/modules/_cache/$MODULE-${MODULE_VER}.tgz.gpg \
   ; done
   
 ## install other components
