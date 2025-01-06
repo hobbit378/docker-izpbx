@@ -7,7 +7,8 @@
 	// Configure additional features
 	"features": {
 		// install tmux - terminal multiplexer
-		"ghcr.io/devcontainers-extra/features/tmux-apt-get:1": {}
+		"ghcr.io/devcontainers-extra/features/tmux-apt-get:1": {},
+		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
 	},
 	// Configure tool-specific properties.
 	"customizations": {
@@ -32,16 +33,12 @@
 			]
 		}
 	}
-
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
-
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
-
 	// Configure tool-specific properties.
 	// "customizations": {},
-
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
 }
