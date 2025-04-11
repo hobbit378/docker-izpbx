@@ -1,0 +1,73 @@
+name: Build Docker Image (Release)
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+  workflow_dispatch:
+    inputs:
+      push:
+        description: 'Push to Docker Hub'
+        required: true
+        default: 'false'
+
+jobs:
+  izpbx-release:
+    runs-on: ubuntu-latest
+    env:
+      APP_VER: ${{ github.ref_name }}
+      APP_VER_BUILD: ${{ github.run_number }}
+      APP_BUILD_COMMIT: ${{ github.sha }}
+      APP_BUILD_DATE: ${{ github.event.head_commit.timestamp }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Restore cache
+        uses: actions/cache@v3
+        with:
+          path: /drone/docker
+          key: ${{ github.repository }}-${{ github.ref_name }}-cache
+
+      - name: Calculate some addtional tags
+        id: tags
+        run: |
+          echo "REF_NAME_FIRST=$(echo ${{ github.ref_name }} | cut -d'.' -f1)" >> $GITHUB_ENV
+          echo "REF_NAME_LAST=$(echo ${{ github.ref_name }} | rev | cut -d'.' -f1 | rev)" >> $GITHUB_ENV
+      
+      - name: Print environment variables
+        run: env
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: izpbx-asterisk
+          file: izpbx-asterisk/Dockerfile
+          push: ${{ vars.PUSH_ENABLED || startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' && github.event.inputs.push == 'true' }}
+          tags: |
+            ${{ vars.REPO_DOCKERHUB_USER}}/izpbx-asterisk:latest
+            ${{ vars.REPO_DOCKERHUB_USER}}/izpbx-asterisk:${{ github.ref_name }}
+            ${{ vars.REPO_DOCKERHUB_USER}}/izpbx-asterisk:${{ github.ref_name }}-${{ github.run_number }}
+            ${{ vars.REPO_DOCKERHUB_USER}}/izpbx-asterisk:${{ env.REF_NAME_FIRST }}
+            ${{ vars.REPO_DOCKERHUB_USER}}/izpbx-asterisk:${{ env.REF_NAME_LAST }}
+          build-args: |
+            APP_VER=${{ env.APP_VER }}
+            APP_VER_BUILD=${{ env.APP_VER_BUILD }}
+            APP_BUILD_COMMIT=${{ env.APP_BUILD_COMMIT }}
+            APP_BUILD_DATE=${{ env.APP_BUILD_DATE }}
+          labels: |
+            org.opencontainers.image.source=${{ github.repository }}
+            org.opencontainers.image.version="${{env.APP_VER}} / Commit: ${{github.sha}} / Build: ${{env.APP_VER_BUILD}})" 
+  
+        env:
+          DOCKER_USERNAME: ${{ vars.REPO_DOCKERHUB_USER }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Rebuild cache
+        uses: actions/cache@v3
+        with:
+          path: /drone/docker
+          key: ${{ github.repository }}-${{ github.ref_name }}-cache
